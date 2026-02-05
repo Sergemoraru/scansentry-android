@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+
+# Kotlin/Java
+*.class
+
+# Mac
+.DS_Store
+
+# Logs
+*.log
+
+# Captures
+captures/
