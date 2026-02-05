@@ -82,6 +82,9 @@ dependencies {
     // Play Billing
     implementation("com.android.billingclient:billing-ktx:7.1.1")
 
+    // QR generation
+    implementation("com.google.zxing:core:3.5.3")
+
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

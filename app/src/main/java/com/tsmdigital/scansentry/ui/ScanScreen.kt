@@ -37,6 +37,9 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.Executors
 
 @Composable
@@ -138,6 +141,18 @@ fun ScanScreen() {
                                         lastScan = raw
                                         showResult = true
                                         cooldownUntil = now + 3_000
+
+                                        // Save to history
+                                        val dao = com.tsmdigital.scansentry.data.AppDatabase.get(ctx).scanDao()
+                                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                                            dao.insert(
+                                                com.tsmdigital.scansentry.data.ScanRecord(
+                                                    rawValue = raw,
+                                                    format = first.format.toString(),
+                                                    createdAtEpochMs = now,
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }

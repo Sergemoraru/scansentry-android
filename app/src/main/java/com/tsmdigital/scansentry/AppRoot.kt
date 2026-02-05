@@ -3,7 +3,11 @@ package com.tsmdigital.scansentry
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.tsmdigital.scansentry.ui.*
+import com.tsmdigital.scansentry.ui.CreateScreen
+import com.tsmdigital.scansentry.ui.DocumentsScreen
+import com.tsmdigital.scansentry.ui.HistoryScreen
+import com.tsmdigital.scansentry.ui.ScanScreen
+import com.tsmdigital.scansentry.ui.SettingsScreen
 
 @Composable
 fun AppRoot() {
