@@ -6,14 +6,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.tsmdigital.scansentry.billing.EntitlementManager
+import com.tsmdigital.scansentry.billing.BillingManager
 
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
-    val entitlements = remember { EntitlementManager(context) }
+    val billing = remember { BillingManager.get(context) }
+    val isPro by billing.isPro.collectAsState()
+    var showPaywall by remember { mutableStateOf(false) }
 
-    var isPro by remember { mutableStateOf(entitlements.isPro) }
+    LaunchedEffect(Unit) {
+        billing.startConnection()
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Settings") }) }
@@ -28,19 +32,17 @@ fun SettingsScreen() {
             Text("Pro", style = MaterialTheme.typography.titleMedium)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(if (isPro) "Active" else "Free")
-                Switch(
-                    checked = isPro,
-                    onCheckedChange = {
-                        // Dev toggle placeholder until Billing is wired.
-                        isPro = it
-                        entitlements.isPro = it
-                    }
-                )
+                Button(onClick = { showPaywall = true }) {
+                    Text("Manage")
+                }
             }
 
             Divider()
             Text("About", style = MaterialTheme.typography.titleMedium)
             Text("Scan Sentry (Android)")
+            if (showPaywall) {
+                PaywallScreen(onClose = { showPaywall = false })
+            }
         }
     }
 }

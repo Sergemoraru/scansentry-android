@@ -25,12 +25,17 @@ import java.io.OutputStream
 @Composable
 fun CreateScreen() {
     val context = LocalContext.current
-    val entitlements = remember { EntitlementManager(context) }
+    val billing = remember { com.tsmdigital.scansentry.billing.BillingManager.get(context) }
+    val isPro by billing.isPro.collectAsState()
 
     var text by remember { mutableStateOf("https://") }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showPaywall by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        billing.startConnection()
+    }
 
     LaunchedEffect(text) {
         bitmap = runCatching { generateQr(text) }.getOrNull()
@@ -75,7 +80,7 @@ fun CreateScreen() {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
                     onClick = {
-                        if (!entitlements.isPro) {
+                        if (!isPro) {
                             showPaywall = true
                         } else {
                             bitmap?.let { shareBitmap(context, it) }
@@ -87,7 +92,7 @@ fun CreateScreen() {
                 }
                 OutlinedButton(
                     onClick = {
-                        if (!entitlements.isPro) {
+                        if (!isPro) {
                             showPaywall = true
                         } else {
                             bitmap?.let {
@@ -107,29 +112,14 @@ fun CreateScreen() {
             }
 
             Text(
-                text = if (entitlements.isPro) "" else "Export requires Pro.",
+                text = if (isPro) "" else "Export requires Pro.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary
             )
         }
 
         if (showPaywall) {
-            AlertDialog(
-                onDismissRequest = { showPaywall = false },
-                title = { Text("Pro required") },
-                text = { Text("Sharing/saving generated QR codes requires Pro.") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        // Placeholder: wire Play Billing next.
-                        entitlements.isPro = true
-                        showPaywall = false
-                        message = "(Dev) Pro enabled"
-                    }) { Text("Subscribe") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showPaywall = false }) { Text("Not now") }
-                }
-            )
+            PaywallScreen(onClose = { showPaywall = false })
         }
     }
 }
