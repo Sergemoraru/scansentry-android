@@ -157,7 +157,7 @@ private fun saveToPhotos(context: Context, bitmap: Bitmap): Boolean {
 
 private fun saveToMediaStore(context: Context, bitmap: Bitmap, baseName: String): Uri? {
     val values = android.content.ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, "$baseName_${System.currentTimeMillis()}.png")
+        put(MediaStore.Images.Media.DISPLAY_NAME, "${baseName}_${System.currentTimeMillis()}.png")
         put(MediaStore.Images.Media.MIME_TYPE, "image/png")
         put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ScanSentry")
     }

@@ -26,13 +26,16 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.google.mlkit.vision.barcode.Barcode
+import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
@@ -255,7 +258,7 @@ private fun ScanOverlay(modifier: Modifier, boxSize: Dp) {
             addRoundRect(RoundRect(rect, CornerRadius(20.dp.toPx(), 20.dp.toPx())))
             fillType = PathFillType.EvenOdd
         }
-        drawPath(path, color = Color.Transparent, blendMode = androidx.compose.ui.graphics.BlendMode.Clear)
+        drawPath(path, color = Color.Transparent, blendMode = BlendMode.Clear)
 
         // Border
         drawRoundRect(
@@ -281,8 +284,8 @@ private fun autoZoom(camera: Camera?, previewView: PreviewView, barcode: Barcode
     val targetRatio = 0.22f
     val ratio = codeArea / viewArea
     val currentZoom = cam.cameraInfo.zoomState.value?.zoomRatio ?: 1f
-    val desired = (currentZoom * kotlin.math.sqrt(targetRatio / ratio))
-        .coerceIn(1f, 6f)
+    val scale = kotlin.math.sqrt((targetRatio / ratio).toDouble()).toFloat()
+    val desired = (currentZoom * scale).coerceIn(1f, 6f)
 
     cam.cameraControl.setZoomRatio(desired)
 }
