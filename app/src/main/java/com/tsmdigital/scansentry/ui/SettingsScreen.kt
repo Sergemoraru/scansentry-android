@@ -38,7 +38,7 @@ fun SettingsScreen() {
                 }
             }
 
-            Divider()
+            HorizontalDivider()
             Text("About", style = MaterialTheme.typography.titleMedium)
             Text("Scan Sentry (Android)")
             if (showPaywall) {

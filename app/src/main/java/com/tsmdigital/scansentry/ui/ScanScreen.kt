@@ -1,12 +1,14 @@
 package com.tsmdigital.scansentry.ui
 
 import android.Manifest
-import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Size
+import androidx.annotation.OptIn
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -15,7 +17,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,18 +43,26 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
+import com.tsmdigital.scansentry.data.AppDatabase
+import com.tsmdigital.scansentry.data.ScanRecord
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun ScanScreen() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val dao = remember { AppDatabase.get(context).scanDao() }
+    val scope = rememberCoroutineScope()
 
-    var hasCameraPermission by remember { mutableStateOf(false) }
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted -> hasCameraPermission = granted }
@@ -64,10 +76,47 @@ fun ScanScreen() {
     var torchOn by remember { mutableStateOf(false) }
     var lastScan by remember { mutableStateOf<String?>(null) }
     var showResult by remember { mutableStateOf(false) }
-    var cooldownUntil by remember { mutableStateOf(0L) }
+    var cooldownUntil by remember { mutableLongStateOf(0L) }
 
     // Camera handles we need to control torch/zoom.
     var camera by remember { mutableStateOf<Camera?>(null) }
+    val scanner = remember {
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(
+                Barcode.FORMAT_QR_CODE,
+                Barcode.FORMAT_AZTEC,
+                Barcode.FORMAT_PDF417,
+                Barcode.FORMAT_DATA_MATRIX,
+                Barcode.FORMAT_CODE_128,
+                Barcode.FORMAT_CODE_39,
+                Barcode.FORMAT_EAN_13,
+                Barcode.FORMAT_EAN_8,
+                Barcode.FORMAT_UPC_A,
+                Barcode.FORMAT_UPC_E,
+            )
+            .build()
+        BarcodeScanning.getClient(options)
+    }
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            scanner.close()
+            analysisExecutor.shutdown()
+        }
+    }
+
+    fun persistScan(raw: String, format: String?, timestamp: Long) {
+        scope.launch(Dispatchers.IO) {
+            dao.insert(
+                ScanRecord(
+                    rawValue = raw,
+                    format = format,
+                    createdAtEpochMs = timestamp
+                )
+            )
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         if (!hasCameraPermission) {
@@ -93,30 +142,12 @@ fun ScanScreen() {
                         it.setSurfaceProvider(previewView.surfaceProvider)
                     }
 
-                    val options = BarcodeScannerOptions.Builder()
-                        .setBarcodeFormats(
-                            Barcode.FORMAT_QR_CODE,
-                            Barcode.FORMAT_AZTEC,
-                            Barcode.FORMAT_PDF417,
-                            Barcode.FORMAT_DATA_MATRIX,
-                            Barcode.FORMAT_CODE_128,
-                            Barcode.FORMAT_CODE_39,
-                            Barcode.FORMAT_EAN_13,
-                            Barcode.FORMAT_EAN_8,
-                            Barcode.FORMAT_UPC_A,
-                            Barcode.FORMAT_UPC_E,
-                        )
-                        .build()
-
-                    val scanner = BarcodeScanning.getClient(options)
-
                     val analysis = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .setTargetResolution(Size(1280, 720))
                         .build()
 
-                    val executor = Executors.newSingleThreadExecutor()
-                    analysis.setAnalyzer(executor) { imageProxy ->
+                    analysis.setAnalyzer(analysisExecutor) { imageProxy ->
                         val media = imageProxy.image
                         if (media == null) {
                             imageProxy.close()
@@ -145,17 +176,7 @@ fun ScanScreen() {
                                         showResult = true
                                         cooldownUntil = now + 3_000
 
-                                        // Save to history
-                                        val dao = com.tsmdigital.scansentry.data.AppDatabase.get(ctx).scanDao()
-                                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                                            dao.insert(
-                                                com.tsmdigital.scansentry.data.ScanRecord(
-                                                    rawValue = raw,
-                                                    format = first.format.toString(),
-                                                    createdAtEpochMs = now,
-                                                )
-                                            )
-                                        }
+                                        persistScan(raw, first.format.toString(), now)
                                     }
                                 }
                             }
@@ -184,18 +205,6 @@ fun ScanScreen() {
             boxSize = boxSize
         )
 
-        // Top controls placeholder (Photo/Paste to match iOS later)
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(top = 16.dp, start = 16.dp, end = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            OutlinedButton(onClick = { /* TODO */ }) { Text("Photo") }
-            Button(onClick = { /* TODO */ }) { Text("Paste") }
-        }
-
         // Bottom-right torch
         IconButton(
             onClick = {
@@ -209,7 +218,7 @@ fun ScanScreen() {
                 .background(Color(0x66FFFFFF), CircleShape)
         ) {
             Icon(
-                imageVector = if (torchOn) androidx.compose.material.icons.Icons.Filled.FlashOn else androidx.compose.material.icons.Icons.Filled.FlashOff,
+                imageVector = if (torchOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
                 contentDescription = "Torch",
                 tint = Color.White
             )

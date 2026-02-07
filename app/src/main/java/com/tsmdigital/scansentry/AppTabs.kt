@@ -8,9 +8,8 @@ enum class AppTab(
     val label: String,
     val icon: ImageVector,
 ) {
-    // Use widely-available Material icons to avoid version-specific missing symbols.
     Scan("Scan", Icons.Filled.CameraAlt),
-    Documents("Documents", Icons.Filled.Folder),
+    Documents("Import", Icons.Filled.PhotoLibrary),
     History("History", Icons.Filled.Schedule),
     Create("Create", Icons.Filled.Add),
     Settings("Settings", Icons.Filled.Settings),

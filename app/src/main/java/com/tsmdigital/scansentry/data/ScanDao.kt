@@ -9,13 +9,13 @@ interface ScanDao {
     fun observeAll(): Flow<List<ScanRecord>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(record: ScanRecord)
+    suspend fun insert(record: ScanRecord): Long
 
     @Query("DELETE FROM scan_records")
-    suspend fun clearAll()
+    suspend fun clearAll(): Int
 
     @Update
-    suspend fun update(record: ScanRecord)
+    suspend fun update(record: ScanRecord): Int
 
     @Delete
     suspend fun delete(record: ScanRecord)

@@ -6,7 +6,7 @@ import com.android.billingclient.api.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class BillingManager private constructor(private val context: Context) : PurchasesUpdatedListener {
+class BillingManager private constructor(context: Context) : PurchasesUpdatedListener {
 
     companion object {
         private const val SUBSCRIPTION_ID = "scansentry_pro"
@@ -33,9 +33,13 @@ class BillingManager private constructor(private val context: Context) : Purchas
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private val billingClient: BillingClient = BillingClient.newBuilder(context)
+    private val billingClient: BillingClient = BillingClient.newBuilder(context.applicationContext)
         .setListener(this)
-        .enablePendingPurchases()
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()
+                .build()
+        )
         .build()
 
     fun startConnection() {

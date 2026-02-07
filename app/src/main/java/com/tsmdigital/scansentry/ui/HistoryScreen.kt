@@ -62,7 +62,7 @@ fun HistoryScreen() {
             ) {
                 items(scans, key = { it.id }) { scan ->
                     ScanRow(scan = scan)
-                    Divider()
+                    HorizontalDivider()
                 }
             }
         }
