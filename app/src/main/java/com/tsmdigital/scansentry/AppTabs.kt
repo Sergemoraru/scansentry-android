@@ -8,9 +8,10 @@ enum class AppTab(
     val label: String,
     val icon: ImageVector,
 ) {
-    Scan("Scan", Icons.Filled.QrCodeScanner),
-    Documents("Documents", Icons.Filled.Description),
-    History("History", Icons.Filled.History),
-    Create("Create", Icons.Filled.QrCode),
+    // Use widely-available Material icons to avoid version-specific missing symbols.
+    Scan("Scan", Icons.Filled.CameraAlt),
+    Documents("Documents", Icons.Filled.Folder),
+    History("History", Icons.Filled.Schedule),
+    Create("Create", Icons.Filled.Add),
     Settings("Settings", Icons.Filled.Settings),
 }
