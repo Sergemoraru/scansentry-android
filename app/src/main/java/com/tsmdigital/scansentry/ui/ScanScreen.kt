@@ -209,7 +209,7 @@ fun ScanScreen() {
                 .background(Color(0x66FFFFFF), CircleShape)
         ) {
             Icon(
-                imageVector = if (torchOn) androidx.compose.material.icons.filled.FlashlightOn else androidx.compose.material.icons.filled.FlashlightOff,
+                imageVector = if (torchOn) androidx.compose.material.icons.Icons.Filled.FlashOn else androidx.compose.material.icons.Icons.Filled.FlashOff,
                 contentDescription = "Torch",
                 tint = Color.White
             )

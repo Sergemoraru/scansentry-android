@@ -19,9 +19,9 @@ import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
-import com.tsmdigital.scansentry.billing.EntitlementManager
 import java.io.OutputStream
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen() {
     val context = LocalContext.current
