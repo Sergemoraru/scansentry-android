@@ -65,6 +65,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    // Material Components theme resources used by themes.xml
+    implementation("com.google.android.material:material:1.12.0")
+
     // CameraX
     implementation("androidx.camera:camera-core:1.3.4")
     implementation("androidx.camera:camera-camera2:1.3.4")
